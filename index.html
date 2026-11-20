@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Decomposition Drill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: a single working column with a stepper; the design view widens for the diagram, specs and script below it. */
+:root {
+  --paper: #f4f6f9;
+  --panel: #ffffff;
+  --ink: #142030;
+  --muted: #5b6878;
+  --line: #d6dce5;
+  --accent: #2c56c9;
+  --accent-soft: #e5ecfb;
+  --ok: #1d7a4c;
+  --warn: #9a5800;
+  --lane: #eef1f6;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e131a; --panel: #151c26; --ink: #e4e9f1; --muted: #98a4b4; --line: #2a3443;
+    --accent: #84a2ff; --accent-soft: #1c2640; --ok: #5fc794; --warn: #e3a54a; --lane: #121922;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e131a; --panel: #151c26; --ink: #e4e9f1; --muted: #98a4b4; --line: #2a3443;
+  --accent: #84a2ff; --accent-soft: #1c2640; --ok: #5fc794; --warn: #e3a54a; --lane: #121922;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 64px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+.sub { color: var(--muted); max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header.top { display: grid; gap: 6px; }
+
+nav.steps { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.steps button {
+  font: 500 13px var(--body); border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+  border-radius: 999px; padding: 6px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center;
+}
+nav.steps button .n { font-family: var(--mono); font-size: 11px; }
+nav.steps button[aria-current="step"] { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+nav.steps button:disabled { opacity: 0.45; cursor: default; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+label.field { display: grid; gap: 6px; font-weight: 500; font-size: 13.5px; }
+select, textarea, input[type="text"] {
+  font: 15px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px; width: 100%;
+}
+textarea { resize: vertical; min-height: 84px; }
+select:focus-visible, textarea:focus-visible, button:focus-visible, .node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.btn {
+  font: 600 14px var(--body); border-radius: 8px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--panel);
+}
+button.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.hint { font-size: 13px; color: var(--muted); }
+.note { font-size: 13.5px; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); border: 1px solid var(--line); }
+.note.warn { color: var(--warn); }
+
+/* Clarify */
+.clarify-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .clarify-grid { grid-template-columns: 1fr; } }
+.progress { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); transition: width 0.25s ease; }
+.qtopic { display: inline-block; font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.qtext { font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.3; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 13px var(--body); border: 1px dashed var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); border-style: solid; }
+ol.params { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: 13.5px; }
+ol.params li.pending { color: var(--muted); }
+ol.params .t { font-family: var(--mono); font-size: 11px; color: var(--muted); display: block; }
+ol.params button.linky { all: unset; cursor: pointer; color: var(--accent); font-size: 12px; margin-left: 6px; }
+
+/* Thinking */
+.thinking { display: flex; gap: 12px; align-items: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite ease-in-out; }
+@keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } .progress > div { transition: none; } }
+
+/* Design */
+.banner { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.kv { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.kv .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.diagram-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+svg.dia { display: block; }
+svg.dia .laneBg { fill: var(--lane); }
+svg.dia .laneT { fill: var(--muted); font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+svg.dia .node rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.25; }
+svg.dia .node.key rect { stroke: var(--accent); stroke-width: 2; }
+svg.dia .node.sel rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+svg.dia .node { cursor: pointer; }
+svg.dia .nm { fill: var(--ink); font: 600 13px var(--body); }
+svg.dia .tc { fill: var(--muted); font: 11px var(--mono); }
+svg.dia .edge { fill: none; stroke: var(--muted); stroke-width: 1.25; opacity: 0.8; }
+svg.dia .edge.hi { stroke: var(--accent); stroke-width: 2; opacity: 1; }
+svg.dia .elbl { fill: var(--muted); font: 11px var(--body); }
+svg.dia .elbl.hi { fill: var(--accent); font-weight: 600; }
+svg.dia .elblBg { fill: var(--paper); }
+svg.dia .arrow { fill: var(--muted); }
+svg.dia .arrowHi { fill: var(--accent); }
+.detail { min-height: 120px; }
+.detail ul, .card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; background: var(--paper); cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.card.key { border-color: var(--accent); }
+.card .lane { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.tag { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); }
+
+/* Script */
+.script { display: grid; gap: 18px; }
+.sec { display: grid; gap: 8px; }
+.sec-h { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-h .mins { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.line { font-size: 16px; line-height: 1.6; padding: 6px 10px; border-left: 3px solid transparent; border-radius: 4px; }
+.rehearse .line { color: var(--muted); }
+.rehearse .line.cur { color: var(--ink); border-left-color: var(--accent); background: var(--accent-soft); }
+.rehearse .line.done { color: var(--muted); opacity: 0.7; }
+.rbar { position: sticky; bottom: env(safe-area-inset-bottom, 0px); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; }
+.timer { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Palantir decomposition practice</span>
+    <h1>Decomposition Drill</h1>
+    <p class="sub">Pick a problem, answer each clarifying question as if the interviewer just told you, then get a drawn design with its specifics and a script to say it out loud.</p>
+  </header>
+
+  <nav class="steps" aria-label="Steps">
+    <button type="button" id="st-problem"><span class="n">1</span>Problem</button>
+    <button type="button" id="st-clarify"><span class="n">2</span>Clarify</button>
+    <button type="button" id="st-design"><span class="n">3</span>Design</button>
+    <button type="button" id="st-script"><span class="n">4</span>Script</button>
+  </nav>
+
+  <!-- 1. Problem -->
+  <section class="panel" id="v-problem" hidden>
+    <h2>Choose a problem</h2>
+    <label class="field" for="preset">From your study guide
+      <select id="preset"></select>
+    </label>
+    <label class="field" for="problem">Problem statement (edit it, or write your own)
+      <textarea id="problem" rows="4"></textarea>
+    </label>
+    <div class="row">
+      <button class="btn" type="button" id="startBtn">Start clarifying</button>
+      <span class="hint" id="problemMsg"></span>
+    </div>
+    <div class="kv" id="keyBox" hidden>
+      <span class="k">Connect Claude</span>
+      <p class="hint">Paste your Anthropic API key (from console.anthropic.com) to generate questions and designs. It's saved only in this browser and sent only to Anthropic. Each design costs a few cents of API usage.</p>
+      <div class="row">
+        <input type="password" id="apiKey" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." style="flex: 1 1 260px;">
+        <button class="btn ghost" type="button" id="saveKey">Save key</button>
+        <button class="btn ghost" type="button" id="forgetKey">Forget key</button>
+      </div>
+      <span class="hint" id="keyMsg"></span>
+    </div>
+    <p class="note" id="noClaude" hidden>Without Claude you'll get a standard set of clarifying questions, and generating a new design won't be available. The example design stays available.</p>
+  </section>
+
+  <!-- 2. Clarify -->
+  <section id="v-clarify" hidden>
+    <div class="clarify-grid">
+      <div class="panel" id="qPanel">
+        <div class="row" style="justify-content: space-between;">
+          <span class="eyebrow" id="qCount"></span>
+          <span class="qtopic" id="qTopic"></span>
+        </div>
+        <div class="progress" aria-hidden="true"><div id="qBar"></div></div>
+        <p class="hint" id="restated"></p>
+        <p class="qtext" id="qText"></p>
+        <p class="hint" id="qWhy"></p>
+        <div>
+          <p class="hint" style="margin-bottom: 6px;">Answers an interviewer might give (tap to use, then edit):</p>
+          <div class="chips" id="qChips"></div>
+        </div>
+        <label class="field" for="answer">Your answer, as the interviewer's parameter
+          <textarea id="answer" rows="3" placeholder="Type the answer you'd assume or the interviewer gave"></textarea>
+        </label>
+        <div class="row" style="justify-content: space-between;">
+          <button class="btn ghost" type="button" id="backBtn">Back</button>
+          <div class="row">
+            <span class="hint" id="nextHint">Answer to continue</span>
+            <button class="btn" type="button" id="nextBtn" disabled>Next question</button>
+          </div>
+        </div>
+      </div>
+      <aside class="panel">
+        <h3>Parameters so far</h3>
+        <ol class="params" id="paramList"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 2b. Review -->
+  <section class="panel" id="v-review" hidden>
+    <h2>Parameters locked in</h2>
+    <p class="sub">Read these back the way you would to the interviewer. Change any answer before generating the design.</p>
+    <ol class="params" id="reviewList"></ol>
+    <div class="row">
+      <button class="btn" type="button" id="genBtn">Generate the design</button>
+      <span class="hint" id="genMsg"></span>
+    </div>
+  </section>
+
+  <!-- Working -->
+  <section class="panel" id="v-working" hidden>
+    <div class="thinking"><span class="dot" aria-hidden="true"></span><h2 id="workTitle">Thinking</h2></div>
+    <p class="sub" id="workSub"></p>
+    <div class="row"><button class="btn ghost" type="button" id="stopBtn">Stop</button></div>
+  </section>
+
+  <!-- 3/4. Design + Script -->
+  <section id="v-design" class="wrap" hidden style="gap: 20px;">
+    <div class="panel">
+      <div class="banner">
+        <div style="display:grid; gap:4px;">
+          <span class="eyebrow" id="dEyebrow"></span>
+          <h2 id="dTitle"></h2>
+        </div>
+        <button class="btn ghost" type="button" id="newBtn">Practice another problem</button>
+      </div>
+      <p class="note" id="exampleNote" hidden>This is an example run with sample answers, so the page shows what you'll get. Start your own from Problem.</p>
+      <div class="goal-grid">
+        <div class="kv"><span class="k">Goal</span><span id="dGoal"></span></div>
+        <div class="kv"><span class="k">Success metric</span><span id="dMetric"></span></div>
+      </div>
+      <details>
+        <summary class="hint" style="cursor:pointer;">Clarified parameters and assumptions</summary>
+        <div class="two" style="margin-top: 10px;">
+          <ol class="params" id="dParams"></ol>
+          <ul id="dAssume" style="margin:0; padding-left:18px; display:grid; gap:6px; font-size:13.5px;"></ul>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content: space-between;">
+        <h2>Architecture</h2>
+        <span class="hint">Select a component to see its specifics and connections. The outlined box is the core of the design.</span>
+      </div>
+      <div class="diagram-wrap">
+        <div class="scroll" id="diaScroll"></div>
+        <aside class="kv detail" id="detail" aria-live="polite"></aside>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Component specifics</h2>
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <div class="two">
+      <div class="panel">
+        <h2>Estimates</h2>
+        <div class="tbl"><table><thead><tr><th>What</th><th>Value</th><th>Math</th></tr></thead><tbody id="tEst"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>APIs</h2>
+        <div class="tbl"><table><thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead><tbody id="tApi"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Data model</h2>
+      <div class="tbl"><table><thead><tr><th>Entity</th><th>Fields</th><th>Keys and notes</th></tr></thead><tbody id="tData"></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Tradeoffs</h2>
+      <div class="tbl"><table><thead><tr><th>Decision</th><th>Chose</th><th>Over</th><th>Because</th><th>Cost we accept</th></tr></thead><tbody id="tTrade"></tbody></table></div>
+    </div>
+
+    <div class="two">
+      <div class="panel">
+        <h2>Failure modes</h2>
+        <div class="tbl"><table><thead><tr><th>Risk</th><th>Mitigation</th></tr></thead><tbody id="tFail"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>MVP, then later</h2>
+        <h3>Ship first</h3>
+        <ul id="mvp" style="margin:0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;"></ul>
+        <h3>Add later</h3>
+        <ul id="later" style="margin:0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;"></ul>
+      </div>
+    </div>
+
+    <div class="panel" id="scriptPanel">
+      <div class="row" style="justify-content: space-between;">
+        <h2>Script to say out loud</h2>
+        <div class="row">
+          <button class="btn ghost" type="button" id="copyBtn">Copy script</button>
+          <button class="btn" type="button" id="rehBtn">Rehearse line by line</button>
+        </div>
+      </div>
+      <p class="hint" id="copyMsg">Each section explains a choice and the alternative you rejected. Total target: <span id="totalMins"></span> minutes.</p>
+      <div class="script" id="script"></div>
+      <div class="rbar" id="rbar" hidden>
+        <span class="timer" id="timer">00:00</span>
+        <span class="hint" id="rpos"></span>
+        <div class="row">
+          <button class="btn ghost" type="button" id="prevLine">Previous</button>
+          <button class="btn" type="button" id="nextLine">Next line</button>
+          <button class="btn ghost" type="button" id="endReh">End</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Presets (from the study guide) ----------
+  var PRESETS = [
+    ["Helping Farmers with Sensors", "Design a system that uses sensors to collect environmental data (temperature, humidity, soil conditions) for farmers. Explain how the data helps them, design the tables and APIs, and handle data loss when sensors send a large amount of data."],
+    ["Quiet Restaurants", "Design a solution to help users find quiet restaurants for dining."],
+    ["Meetup Service", "Build a system for Palantir employees to make friends with other employees, matched every few weeks. Cover database design, the matching algorithm, a REST API with notes on scale, and the frontend."],
+    ["Course Registration", "Design a university course registration system. Professors create courses and assign rooms; students register for courses."],
+    ["Miscommunication Across Teams", "Design a solution for company miscommunication when several teams work on similar projects, or with the same client, without knowing it."],
+    ["Taxi Drivers", "Given a dataset of taxi trips, design a service to improve taxi drivers' quality of life."],
+    ["Flight Scheduling", "Design an automated tool that assigns flights to available planes at an airport. If a previous flight is delayed five hours, how do you assign another available aircraft, and what are the new departure and arrival times?"],
+    ["Pest Control", "You have a farmer database (name, phone, location) and a CSV of pest treatments (pest, number of consecutive days, temperature range, treatment). Use these to help farmers with pest problems. Follow-ups: a few-week MVP, a government weather API, 100,000 farmers, running for a year."],
+    ["911 Dispatch Times", "Help a city halve its emergency dispatch times using 911 call data, traffic data and ambulance GPS."],
+    ["Military Asset Tracking", "Design a system to track the real-time location of all military assets for a field commander."],
+    ["Hospital Readmission Risk", "Build a data pipeline that ingests hospital records and flags patients at risk of readmission."],
+    ["Bank Fraud Detection", "Design fraud and anomaly detection for a major bank's financial transactions."],
+    ["Intelligence Knowledge Graph", "How would you structure a knowledge graph for an intelligence agency?"],
+    ["Supply Chain Disruptions", "Design a system to track supply chain disruptions in real time."],
+    ["Evidence Management", "Build an evidence management system for a law enforcement agency."],
+    ["500-Source Data Platform", "Design a data platform for an enterprise with 500 disparate data sources."],
+    ["Write my own", ""]
+  ];
+
+  var GENERIC_QUESTIONS = [
+    { topic: "Users and goal", question: "Who is the main user, and what decision or action should this help them take?", why: "The user's decision sets what the system must get right; everything else is supporting detail.", options: ["Front-line operators", "Managers deciding weekly", "Analysts investigating"] },
+    { topic: "Success metric", question: "How will we know it's working? What number should move?", why: "A metric lets you prioritize components and say what the MVP must prove.", options: ["Time to decision", "Fewer missed events", "Cost per case"] },
+    { topic: "Scale", question: "How many users, records and events per second at peak?", why: "Scale decides whether one database is enough or you need queues, partitioning and caching.", options: ["Thousands of users", "Millions of events/day", "Bursty peaks 10x average"] },
+    { topic: "Freshness", question: "How fresh must the data be when someone acts on it?", why: "Seconds means streaming; hours means a batch job, which is far simpler.", options: ["Seconds", "Within 15 minutes", "Daily is fine"] },
+    { topic: "Data sources", question: "Where does the data come from, and how messy or late is it?", why: "Integration and data quality are usually the hardest part of Palantir-style problems.", options: ["A few clean APIs", "Many legacy systems", "Manual uploads, often late"] },
+    { topic: "Correctness", question: "What's worse here: a missed result or a wrong one? Can we lose any data?", why: "This picks consistency vs availability and how hard you work on delivery guarantees.", options: ["Never lose a record", "Some loss is fine", "False alarms are costly"] },
+    { topic: "Access", question: "Who may see which data, and does it need an audit trail?", why: "Permissions and audit shape the data model and every read path.", options: ["Per-team access", "Strict need-to-know + audit", "Mostly open internally"] },
+    { topic: "Timeline", question: "What must ship first, and by when?", why: "A deadline forces an MVP and tells you which components to defer.", options: ["Pilot in 6-8 weeks", "One region first", "Full launch in a quarter"] }
+  ];
+
+  // ---------- Example run (shown at rest) ----------
+  var EXAMPLE = {
+    problem: PRESETS[0][1],
+    restated: "Build a system that collects soil and weather readings from farm sensors and tells farmers when to act, without losing data when fields are offline or traffic spikes.",
+    questions: [
+      { topic: "Users and goal", question: "Who uses this, and what decision should it change for them?", why: "Designing backward from one decision keeps the scope honest.", options: [] },
+      { topic: "First decision", question: "Should we only advise farmers, or also control equipment like irrigation?", why: "Automatic control needs far stronger safety and ownership guarantees.", options: [] },
+      { topic: "Scale", question: "How many farms and sensors, and how often do sensors report?", why: "Sets write throughput and storage size.", options: [] },
+      { topic: "Freshness", question: "How quickly does a farmer need to hear about a problem?", why: "Minutes allows micro-batching instead of per-event streaming.", options: [] },
+      { topic: "Connectivity", question: "What connectivity do fields have?", why: "Offline fields need buffering at the edge.", options: [] },
+      { topic: "Data loss", question: "Must every reading arrive, or can we tolerate gaps?", why: "Decides acknowledgment rules and delivery guarantees.", options: [] },
+      { topic: "Access", question: "Who can see a farm's data?", why: "Drives row-level permissions.", options: [] },
+      { topic: "Timeline", question: "What ships first, and by when?", why: "Defines the MVP.", options: [] }
+    ],
+    answers: [
+      "Small and mid-size farmers; decide when to irrigate each field.",
+      "Advice only for now: alert when a field is too dry.",
+      "100k farms, about 10 sensors each, one reading per minute.",
+      "Within 15 minutes is fine.",
+      "Spotty cellular; gateways can be offline for hours.",
+      "Every reading matters for history; alerts can tolerate small gaps.",
+      "Only the farm owner and staff they invite.",
+      "One-region pilot in 8 weeks."
+    ],
+    design: {
+      title: "Farm sensor alerts",
+      goal: "Tell farmers within 15 minutes when a field needs water, while keeping every reading for history.",
+      metric: "Share of dry-field episodes alerted within 15 min; guardrail: false alerts under 1 per field per week.",
+      assumptions: ["Sensors carry a sequence counter that resets on reboot", "Gateways have about 7 days of local storage", "An SMS/push provider is available"],
+      estimates: [
+        { label: "Peak writes", value: "~16.7k readings/s", math: "100k farms \u00d7 10 sensors ÷ 60 s" },
+        { label: "Raw storage", value: "~43 GB/day", math: "1.44B readings \u00d7 ~30 bytes compressed" },
+        { label: "Rule checks", value: "~3.3k fields/s", math: "1M fields ÷ 300 s evaluation window" }
+      ],
+      components: [
+        { id: "sensors", name: "Soil sensors", lane: "clients", what: "Measure moisture and temperature every minute.", tech: "LoRa or cellular modules", specs: ["Each reading carries sensor_id, boot_id, seq", "boot_id changes on reboot so seq resets are safe"] },
+        { id: "gateway", name: "Field gateway", lane: "clients", what: "Buffers readings and uploads them when the network is up.", tech: "Small Linux box, SQLite buffer", specs: ["Batch up to 500 readings or 30 s", "Exponential backoff, capped at 10 min", "Delete locally only after server ack", "7 days of buffer; oldest dropped first, gap reported"] },
+        { id: "ingest_api", name: "Ingest API", lane: "ingest", what: "Accepts batches and acknowledges only durable writes.", tech: "Stateless service behind a load balancer", specs: ["POST /readings:batch, max 1 MB", "Ack only after the queue confirms", "Per-farm quota 50 requests/min", "Returns accepted and rejected items"] },
+        { id: "queue", name: "Durable queue", lane: "ingest", what: "Absorbs bursts and decouples ingest from processing.", tech: "Kafka, partitioned by sensor_id", specs: ["7-day retention for replay", "Alert if consumer lag > 5 min"] },
+        { id: "dedupe", name: "Validate and dedupe", lane: "processing", what: "Cleans readings and makes retries harmless.", tech: "Stream workers", specs: ["Upsert keyed on (sensor_id, boot_id, seq)", "Out-of-range values go to a quarantine topic", "Tracks sequence gaps per sensor"] },
+        { id: "rules", name: "Alert rule engine", lane: "processing", what: "Decides when a field is dry, with no flapping.", tech: "Scheduled job every 5 min per field", specs: ["Fire after 3 consecutive low readings", "Clear only above a separate recovery level", "No data for 30 min: 'sensor silent', never 'dry'"] },
+        { id: "tsdb", name: "Time-series store", lane: "storage", what: "Holds raw readings and rollups.", tech: "TimescaleDB", specs: ["Raw for 90 days, 15-min rollups for 5 years", "Chunked by day, compressed after 7 days"] },
+        { id: "pg", name: "Farm and rules DB", lane: "storage", what: "Farms, fields, thresholds, alerts and the outbox.", tech: "Postgres", specs: ["Row-level security on farm_id", "Alert + outbox row written in one transaction"] },
+        { id: "notifier", name: "Notifier", lane: "consumers", what: "Sends one message per alert episode.", tech: "Outbox worker + SMS/push provider", specs: ["Stable message id for provider dedupe", "Retries with backoff; delivery status stored"] },
+        { id: "app", name: "Farmer app", lane: "consumers", what: "Field map, history charts and threshold settings.", tech: "Mobile web", specs: ["Shows data freshness per sensor", "Thresholds editable per crop"] }
+      ],
+      keyComponent: "ingest_api",
+      flows: [
+        { from: "sensors", to: "gateway", label: "readings + seq" },
+        { from: "gateway", to: "ingest_api", label: "batched, retried" },
+        { from: "ingest_api", to: "queue", label: "durable append" },
+        { from: "queue", to: "dedupe", label: "consume" },
+        { from: "dedupe", to: "tsdb", label: "idempotent upsert" },
+        { from: "tsdb", to: "rules", label: "last 30 min" },
+        { from: "rules", to: "pg", label: "alert + outbox" },
+        { from: "pg", to: "notifier", label: "outbox rows" },
+        { from: "tsdb", to: "app", label: "charts" }
+      ],
+      dataModel: [
+        { entity: "Reading", fields: "sensor_id, boot_id, seq, event_time, received_at, metric, value, quality", notes: "PK (sensor_id, boot_id, seq); event_time places it, received_at shows lateness" },
+        { entity: "Sensor", fields: "id, field_id, metric, unit, calibration_version, last_seen_at", notes: "last_seen_at drives 'sensor silent'" },
+        { entity: "Rule", fields: "id, field_id, metric, low, recover, consecutive, version", notes: "Versioned so every alert is traceable" },
+        { entity: "Alert", fields: "id, field_id, rule_version, episode_start, status", notes: "Unique (field_id, rule_version, episode_start)" },
+        { entity: "Outbox", fields: "id, alert_id, channel, message_id, status, attempts", notes: "Written in the same transaction as Alert" }
+      ],
+      apis: [
+        { method: "POST", path: "/readings:batch", purpose: "Upload readings; returns per-item accept/reject" },
+        { method: "GET", path: "/fields/{id}/readings?from&to", purpose: "History for charts" },
+        { method: "PUT", path: "/fields/{id}/rules", purpose: "Set thresholds for a field" },
+        { method: "GET", path: "/fields/{id}/alerts", purpose: "Current and past alert episodes" }
+      ],
+      tradeoffs: [
+        { decision: "Delivery guarantee", chose: "At-least-once + idempotent upserts", over: "Exactly-once delivery", because: "Simpler, and the dedupe key makes repeats harmless", cost: "Duplicate traffic during retries" },
+        { decision: "Alert timing", chose: "Evaluate every 5 min", over: "Per-reading streaming rules", because: "15-min freshness allows it; far easier to run and test", cost: "Up to 5 min extra delay" },
+        { decision: "Storage", chose: "TimescaleDB", over: "Cassandra", because: "SQL rollups and joins with field data; fits pilot scale", cost: "Must shard or move later beyond ~50k writes/s" },
+        { decision: "Action", chose: "Advise only", over: "Automatic irrigation", because: "Bad data can't flood a field; ships in 8 weeks", cost: "Farmer still has to act" }
+      ],
+      failures: [
+        { risk: "Field offline for hours", mitigation: "Gateway buffers 7 days; uploads in order when back" },
+        { risk: "Retry storm after an outage", mitigation: "Jittered backoff, per-farm quotas, queue absorbs the burst" },
+        { risk: "Dead sensor read as 'dry'", mitigation: "Silence produces a separate 'sensor silent' alert" },
+        { risk: "Notification sent twice", mitigation: "Outbox + stable message id; one message per episode" }
+      ],
+      mvp: ["One region, moisture only", "Batch upload + dedupe + time-series store", "Dry-field SMS alerts with hysteresis"],
+      later: ["Weather forecasts in rules", "Crop-specific thresholds from agronomists", "Optional irrigation control with manual confirm"],
+      script: [
+        { section: "Restate and parameters", minutes: 2, lines: [
+          "Let me restate it: we collect soil and weather readings from farm sensors and tell farmers when to act, without losing data when fields go offline.",
+          "From your answers: about 100,000 farms with 10 sensors each reporting every minute, alerts within 15 minutes, advice only, and a one-region pilot in 8 weeks.",
+          "The two things that matter most are never losing a reading and never telling a farmer a field is dry when the sensor is just dead."
+        ] },
+        { section: "Goal and metric", minutes: 1, lines: [
+          "I'll measure the share of dry-field episodes we alert on within 15 minutes, with a guardrail of fewer than one false alert per field per week.",
+          "I'm deliberately not automating irrigation yet; a bad reading should cost a text message, not a flooded field."
+        ] },
+        { section: "Walk the diagram", minutes: 4, lines: [
+          "Data flows left to right. Sensors stamp each reading with a sensor id, a boot id and a sequence number, and send it to a gateway on the farm.",
+          "The gateway buffers locally and uploads in batches, retrying with backoff. It only deletes a reading after the server acknowledges it.",
+          "The ingest API acknowledges only after the reading is durably in Kafka. That one rule is what makes the system lossless end to end.",
+          "Workers validate and upsert into TimescaleDB keyed on sensor, boot and sequence, so a retried batch can't create duplicates.",
+          "Every five minutes a rule engine checks each field, writes an alert and an outbox row in one transaction, and a notifier sends one message per episode."
+        ] },
+        { section: "Deep dive: not losing data", minutes: 4, lines: [
+          "The hardest part is ingestion under bad networks, so I'll go deep there.",
+          "I chose at-least-once delivery with idempotent writes over exactly-once. Exactly-once across a flaky field network is expensive; a dedupe key gets the same result.",
+          "The boot id matters because sequence counters reset when a sensor reboots; without it, new readings would look like duplicates and be dropped.",
+          "Buffers are finite, so when a gateway fills up we drop the oldest readings and report the gap instead of silently pretending the data was normal."
+        ] },
+        { section: "Tradeoffs", minutes: 3, lines: [
+          "I evaluate rules every five minutes instead of on every reading. With a 15-minute target that's plenty, and it's much easier to test and backfill.",
+          "I picked TimescaleDB over Cassandra because we need rollups and joins with field data, and pilot scale fits comfortably. Past roughly 50,000 writes a second I'd shard or move.",
+          "Alerts use hysteresis: fire after three low readings, clear only above a higher recovery level, so a field hovering at the threshold doesn't spam the farmer."
+        ] },
+        { section: "Scale and failure modes", minutes: 3, lines: [
+          "At full scale that's about 16,700 writes a second and 43 gigabytes a day, so I'd batch, compress after a week and keep only rollups after 90 days.",
+          "After an outage every gateway reconnects at once, so backoff is jittered, quotas are per farm, and Kafka absorbs the burst.",
+          "A silent sensor triggers its own alert, and the outbox with a stable message id stops double texts."
+        ] },
+        { section: "Wrap-up and next steps", minutes: 1, lines: [
+          "For the 8-week pilot I'd ship one region, moisture only, with batch upload, dedupe and dry-field alerts.",
+          "Next I'd add weather forecasts to the rules and crop-specific thresholds. Which of these would you like me to go deeper on?"
+        ] }
+      ]
+    }
+  };
+
+  // ---------- State ----------
+  var KEY = "decomp-drill-v1";
+  var API_KEY_STORE = "decomp-drill-api-key";
+  var SDK_URL = "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.5.0/+esm";
+  var MODEL = "claude-opus-5-5";
+  var state = null;
+  var sample = null;
+  var ctl = null;
+  var view = "design";
+  var inClaudeViewer = !!(window.claude && typeof window.claude.use === "function");
+  var apiKey = "";
+  try { apiKey = localStorage.getItem(API_KEY_STORE) || ""; } catch (e) { apiKey = ""; }
+
+  function haveClaude() { return !!sample || (!inClaudeViewer && !!apiKey); }
+
+  // One entry point for both hosts: claude.ai artifacts use the viewer's account (sample),
+  // anywhere else uses the official Anthropic SDK with the visitor's own API key.
+  function askJson(prompt, o) {
+    o = o || {};
+    if (sample) {
+      return sample.json(prompt, { signal: o.signal, onText: o.onText, modelTier: o.tier || "default", cache: false });
+    }
+    if (!apiKey) return Promise.reject({ code: "no_key" });
+    return apiJson(prompt, o);
+  }
+
+  function parseJsonLoose(text) {
+    var t = String(text || "").trim();
+    var fence = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) t = fence[1].trim();
+    try { return JSON.parse(t); } catch (e) { /* fall through */ }
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e2) { /* fall through */ } }
+    throw { code: "invalid_json" };
+  }
+
+  var sdkPromise = null;
+  function apiJson(prompt, o) {
+    if (!sdkPromise) sdkPromise = import(SDK_URL).then(function (m) { return m.default; });
+    return sdkPromise.catch(function () { sdkPromise = null; throw { code: "network" }; }).then(function (Anthropic) {
+      var client = new Anthropic({ apiKey: apiKey, dangerouslyAllowBrowser: true });
+      var stream = client.beta.messages.stream({
+        model: MODEL,
+        max_tokens: 32000,
+        output_config: { effort: o.effort || "medium" },
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        messages: [{ role: "user", content: prompt + "\n\nReply with only the JSON value and no other text." }]
+      }, { signal: o.signal });
+      if (o.onText) stream.on("text", function (delta, snapshot) { o.onText({ text: snapshot, delta: delta }); });
+      return stream.finalMessage().then(function (msg) {
+        if (msg.stop_reason === "refusal") throw { code: "refused" };
+        if (msg.stop_reason === "max_tokens") throw { code: "invalid_json" };
+        var text = msg.content.filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+        return parseJsonLoose(text);
+      }, function (e) {
+        if (e instanceof Anthropic.APIUserAbortError) throw { code: "cancelled" };
+        if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) throw { code: "bad_key" };
+        if (e instanceof Anthropic.RateLimitError) throw { code: "rate_limited" };
+        if (e instanceof Anthropic.APIConnectionError) throw { code: "network" };
+        throw { code: "upstream_error" };
+      });
+    });
+  }
+
+  function fresh() { return { problem: "", restated: "", questions: [], answers: [], idx: 0, design: null, isExample: false }; }
+  function save() {
+    if (!state || state.isExample) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  }
+  function load() {
+    try { var s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object" && s.problem) return s; } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function str(v) { return v == null ? "" : String(v); }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+  function wrapText(text, max) {
+    var words = str(text).split(/\s+/).filter(Boolean), lines = [], cur = "";
+    words.forEach(function (w) {
+      if ((cur + " " + w).trim().length > max && cur) { lines.push(cur); cur = w; }
+      else cur = (cur + " " + w).trim();
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function errCopy(e) {
+    var c = e && e.code;
+    if (c === "not_granted" || c === "sampling_disabled") return "Claude access isn't allowed for this page, so this step can't run here.";
+    if (c === "no_key") return "Add your Anthropic API key under Problem first.";
+    if (c === "bad_key") return "Anthropic rejected that API key. Check it under Problem and try again.";
+    if (c === "network") return "Couldn't reach Anthropic. Check your connection and try again.";
+    if (c === "rate_limited") return "Claude is busy or you've hit a usage limit. Try again in a minute.";
+    if (c === "invalid_json") return "Claude's answer came back in the wrong format. Try again.";
+    if (c === "refused") return "Claude declined this problem. Try rewording it.";
+    if (c === "session_expired") return "Sign in to Claude again, then retry.";
+    if (c === "cancelled") return "Stopped.";
+    return "Something went wrong reaching Claude. Try again.";
+  }
+
+  // ---------- Views ----------
+  var VIEWS = ["problem", "clarify", "review", "working", "design"];
+  function show(v) {
+    view = v;
+    VIEWS.forEach(function (n) { $("v-" + n).hidden = n !== v; });
+    var map = { problem: "st-problem", clarify: "st-clarify", review: "st-clarify", working: null, design: "st-design" };
+    ["st-problem", "st-clarify", "st-design", "st-script"].forEach(function (id) { $(id).removeAttribute("aria-current"); });
+    if (map[v]) $(map[v]).setAttribute("aria-current", "step");
+    $("st-clarify").disabled = !(state && state.questions.length) || v === "working";
+    $("st-design").disabled = !(state && state.design) || v === "working";
+    $("st-script").disabled = !(state && state.design) || v === "working";
+    $("st-problem").disabled = v === "working";
+    if (v === "clarify") renderQuestion();
+    if (v === "review") renderReview();
+    if (v === "design") renderDesign();
+    if (v === "problem") renderProblem();
+    window.scrollTo({ top: 0 });
+  }
+
+  // ---------- Problem ----------
+  function renderProblem() {
+    var sel = $("preset");
+    if (!sel.options.length) {
+      PRESETS.forEach(function (p, i) { var o = el("option", null, p[0]); o.value = String(i); sel.appendChild(o); });
+    }
+    if (!$("problem").value) {
+      var cur = state && !state.isExample ? state.problem : "";
+      $("problem").value = cur || PRESETS[0][1];
+    }
+    $("keyBox").hidden = inClaudeViewer;
+    $("apiKey").value = "";
+    $("keyMsg").textContent = apiKey ? "A key is saved in this browser." : "No key saved yet.";
+    $("noClaude").hidden = haveClaude();
+  }
+  $("saveKey").addEventListener("click", function () {
+    var k = $("apiKey").value.trim();
+    if (!/^sk-ant-/.test(k)) { $("keyMsg").textContent = "That doesn't look like an Anthropic API key (it starts with sk-ant-)."; return; }
+    apiKey = k;
+    try { localStorage.setItem(API_KEY_STORE, k); $("keyMsg").textContent = "Key saved in this browser."; }
+    catch (e) { $("keyMsg").textContent = "Key set for this visit only (this browser won't store it)."; }
+    $("apiKey").value = "";
+    $("noClaude").hidden = haveClaude();
+  });
+  $("forgetKey").addEventListener("click", function () {
+    apiKey = "";
+    try { localStorage.removeItem(API_KEY_STORE); } catch (e) { /* ignore */ }
+    $("apiKey").value = "";
+    $("keyMsg").textContent = "Key removed from this browser.";
+    $("noClaude").hidden = haveClaude();
+  });
+  $("preset").addEventListener("change", function () {
+    var p = PRESETS[Number($("preset").value)];
+    $("problem").value = p ? p[1] : "";
+    $("problem").focus();
+  });
+
+  $("startBtn").addEventListener("click", function () {
+    var problem = $("problem").value.trim();
+    if (problem.length < 10) { $("problemMsg").textContent = "Write the problem in at least a sentence."; return; }
+    $("problemMsg").textContent = "";
+    state = fresh();
+    state.problem = problem;
+    if (!haveClaude()) { useGeneric(); return; }
+    ctl = new AbortController();
+    $("workTitle").textContent = "Writing clarifying questions";
+    $("workSub").textContent = "Claude is drafting the questions a strong candidate would ask for this problem. This usually takes 10-40 seconds.";
+    show("working");
+    var prompt = "You are coaching a candidate for Palantir's decomposition (system design) interview.\n\nThe problem:\n\"\"\"" + problem + "\"\"\"\n\n" +
+      "Write the clarifying questions a strong candidate asks BEFORE designing, in this order: users and the decision they make, success metric, scale, freshness/latency, data sources and quality, correctness and data-loss tolerance, access/permissions, timeline/MVP. Use 6 to 8 questions, each specific to this problem rather than generic.\n" +
+      "For each give: a 1-3 word topic, the question as the candidate would say it aloud, one sentence on why the answer changes the design, and 3 short example answers an interviewer might give (under 8 words each, concrete numbers where relevant).\n" +
+      "Also restate the problem in one sentence as the candidate would.\n\n" +
+      "Reply with only JSON: {\"restated\":\"...\",\"questions\":[{\"topic\":\"...\",\"question\":\"...\",\"why\":\"...\",\"options\":[\"...\",\"...\",\"...\"]}]}";
+    askJson(prompt, { signal: ctl.signal, tier: "default", effort: "medium" }).then(function (res) {
+      var qs = arr(res && res.questions).filter(function (q) { return q && q.question; }).slice(0, 8).map(function (q) {
+        return { topic: str(q.topic).slice(0, 40), question: str(q.question), why: str(q.why), options: arr(q.options).map(str).filter(Boolean).slice(0, 4) };
+      });
+      if (qs.length < 3) throw { code: "invalid_json" };
+      state.restated = str(res.restated);
+      state.questions = qs;
+      state.answers = qs.map(function () { return ""; });
+      state.idx = 0;
+      save();
+      show("clarify");
+    }).catch(function (e) {
+      if (e && e.code === "cancelled") { show("problem"); return; }
+      useGeneric(errCopy(e) + " Using a standard question set instead.");
+    });
+  });
+
+  function useGeneric(msg) {
+    state.questions = GENERIC_QUESTIONS.map(function (q) { return Object.assign({}, q, { options: q.options.slice() }); });
+    state.answers = state.questions.map(function () { return ""; });
+    state.idx = 0;
+    state.restated = msg || "";
+    save();
+    show("clarify");
+  }
+
+  // ---------- Clarify: one question at a time ----------
+  function renderQuestion() {
+    var q = state.questions[state.idx];
+    if (!q) { show("review"); return; }
+    var n = state.questions.length;
+    $("qCount").textContent = "Question " + (state.idx + 1) + " of " + n;
+    $("qTopic").textContent = q.topic || "Clarify";
+    $("qBar").style.width = Math.round((state.idx / n) * 100) + "%";
+    $("restated").textContent = state.idx === 0 && state.restated ? state.restated : "";
+    $("restated").hidden = !(state.idx === 0 && state.restated);
+    $("qText").textContent = q.question;
+    $("qWhy").textContent = q.why ? "Why it matters: " + q.why : "";
+    var chips = $("qChips"); clear(chips);
+    q.options.forEach(function (opt) {
+      var b = el("button", "chip", opt); b.type = "button";
+      b.addEventListener("click", function () {
+        var a = $("answer"); a.value = a.value.trim() ? a.value.trim() + "; " + opt : opt; a.focus(); syncNext();
+      });
+      chips.appendChild(b);
+    });
+    chips.parentElement.hidden = !q.options.length;
+    $("answer").value = state.answers[state.idx] || "";
+    $("backBtn").disabled = state.idx === 0;
+    $("nextBtn").textContent = state.idx === n - 1 ? "Finish clarifying" : "Next question";
+    syncNext();
+    renderParams($("paramList"), true);
+    $("answer").focus();
+  }
+  function syncNext() {
+    var ok = $("answer").value.trim().length > 0;
+    $("nextBtn").disabled = !ok;
+    $("nextHint").hidden = ok;
+  }
+  $("answer").addEventListener("input", function () {
+    state.answers[state.idx] = $("answer").value; save(); syncNext();
+  });
+  $("answer").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !$("nextBtn").disabled) { e.preventDefault(); $("nextBtn").click(); }
+  });
+  $("nextBtn").addEventListener("click", function () {
+    var a = $("answer").value.trim();
+    if (!a) return;
+    state.answers[state.idx] = a;
+    state.idx += 1;
+    save();
+    if (state.idx >= state.questions.length) show("review"); else renderQuestion();
+  });
+  $("backBtn").addEventListener("click", function () {
+    if (state.idx > 0) { state.answers[state.idx] = $("answer").value; state.idx -= 1; save(); renderQuestion(); }
+  });
+
+  function renderParams(list, live) {
+    clear(list);
+    state.questions.forEach(function (q, i) {
+      var li = el("li");
+      var t = el("span", "t", q.topic || "Question " + (i + 1));
+      li.appendChild(t);
+      var ans = str(state.answers[i]).trim();
+      if (ans && (!live || i < state.idx || i === state.idx)) {
+        li.appendChild(document.createTextNode(ans));
+        if (!live || i !== state.idx) {
+          var b = el("button", "linky", "Edit"); b.type = "button";
+          b.addEventListener("click", function () { state.idx = i; save(); show("clarify"); });
+          li.appendChild(b);
+        }
+      } else {
+        li.className = "pending";
+        li.appendChild(document.createTextNode(live && i === state.idx ? "Answering now" : "Not answered yet"));
+      }
+      list.appendChild(li);
+    });
+  }
+
+  // ---------- Review + generate ----------
+  function renderReview() {
+    renderParams($("reviewList"), false);
+    var missing = state.answers.some(function (a) { return !str(a).trim(); });
+    $("genBtn").disabled = missing || !haveClaude();
+    $("genMsg").textContent = missing ? "Answer every question first." : (!haveClaude() ? (inClaudeViewer ? "Generating a design needs Claude, which isn't available in this view." : "Add your Anthropic API key under Problem to generate a design.") : "Takes about 30-90 seconds.");
+  }
+
+  var DESIGN_SHAPE = '{"title":"short name","goal":"one sentence","metric":"primary metric + one guardrail","assumptions":["..."],"estimates":[{"label":"Peak writes","value":"~17k/s","math":"100k farms x 10 sensors / 60 s"}],"components":[{"id":"ingest_api","name":"Ingest API","lane":"ingest","what":"one-sentence role","tech":"concrete technology","specs":["specific setting, key, limit or rule"]}],"keyComponent":"ingest_api","flows":[{"from":"sensors","to":"ingest_api","label":"batched readings"}],"dataModel":[{"entity":"Reading","fields":"sensor_id, seq, event_time, value","notes":"keys, uniqueness, indexes"}],"apis":[{"method":"POST","path":"/readings:batch","purpose":"..."}],"tradeoffs":[{"decision":"Delivery guarantee","chose":"At-least-once + idempotent writes","over":"Exactly-once","because":"...","cost":"..."}],"failures":[{"risk":"...","mitigation":"..."}],"mvp":["..."],"later":["..."],"script":[{"section":"Restate and parameters","minutes":2,"lines":["..."]}]}';
+
+  $("genBtn").addEventListener("click", function () {
+    if (!haveClaude()) return;
+    var qa = state.questions.map(function (q, i) { return (i + 1) + ". [" + q.topic + "] " + q.question + "\n   Answer: " + str(state.answers[i]).trim(); }).join("\n");
+    var prompt = "You are an expert system designer preparing a candidate for Palantir's decomposition interview. Produce a concrete design for the problem below that uses exactly the parameters the candidate clarified.\n\n" +
+      "Problem:\n\"\"\"" + state.problem + "\"\"\"\n\nClarified parameters:\n" + qa + "\n\n" +
+      "Requirements:\n" +
+      "- Be specific: name technologies, keys, limits, timeouts, retention and numbers wherever they follow from the parameters. Show estimate math.\n" +
+      "- 6 to 10 components. Each has a lane, exactly one of: \"clients\", \"ingest\", \"processing\", \"storage\", \"consumers\". Each has 2-4 specs. Ids are lowercase_snake_case.\n" +
+      "- 6 to 12 flows between component ids, each labelled in 1-4 words, following the main data path.\n" +
+      "- keyComponent is the id of the single component the design hinges on.\n" +
+      "- 3-5 tradeoffs, each naming the alternative rejected. 3-5 failure modes. 3-4 estimates. 4-6 data model entities. 3-6 APIs.\n" +
+      "- script: what the candidate says out loud, first person, plain spoken English, 6-7 sections in interview order: restate and parameters; goal and metric; walk the diagram following the data; deep dive on the hardest part; tradeoffs; scale and failure modes; wrap-up and next steps. Each section has a minutes target (total about 18) and 2-5 lines; each line is one or two sentences and explains why, naming the alternative where there is one. End by offering to go deeper.\n" +
+      "- Keep every string short.\n\nReply with only JSON in this shape:\n" + DESIGN_SHAPE;
+    ctl = new AbortController();
+    $("workTitle").textContent = "Designing the system";
+    $("workSub").textContent = "Claude is drafting the architecture, specifics, tradeoffs and script from your parameters. Usually 30-90 seconds.";
+    show("working");
+    var chars = 0;
+    askJson(prompt, {
+      signal: ctl.signal,
+      tier: "complex",
+      effort: "high",
+      onText: function (u) { chars = u.text.length; $("workSub").textContent = "Writing the design... " + Math.round(chars / 100) / 10 + "k characters so far."; }
+    }).then(function (d) {
+      var design = normalize(d);
+      if (!design) throw { code: "invalid_json" };
+      state.design = design;
+      state.isExample = false;
+      save();
+      show("design");
+    }).catch(function (e) {
+      show("review");
+      $("genMsg").textContent = errCopy(e);
+    });
+  });
+  $("stopBtn").addEventListener("click", function () { if (ctl) ctl.abort(); });
+
+  function normalize(d) {
+    if (!d || typeof d !== "object") return null;
+    var lanes = ["clients", "ingest", "processing", "storage", "consumers"];
+    var seen = {};
+    var comps = arr(d.components).filter(function (c) { return c && c.name; }).slice(0, 12).map(function (c, i) {
+      var id = str(c.id || ("c" + i)).replace(/[^a-zA-Z0-9_-]/g, "_") || ("c" + i);
+      while (seen[id]) id += "_";
+      seen[id] = true;
+      return { id: id, name: str(c.name), lane: lanes.indexOf(c.lane) >= 0 ? c.lane : "processing", what: str(c.what), tech: str(c.tech), specs: arr(c.specs).map(str).filter(Boolean).slice(0, 6) };
+    });
+    if (comps.length < 3) return null;
+    var flows = arr(d.flows).filter(function (f) { return f && seen[f.from] && seen[f.to] && f.from !== f.to; }).slice(0, 16).map(function (f) { return { from: str(f.from), to: str(f.to), label: str(f.label).slice(0, 32) }; });
+    var script = arr(d.script).filter(function (s) { return s && arr(s.lines).length; }).map(function (s) {
+      return { section: str(s.section), minutes: Number(s.minutes) > 0 ? Math.round(Number(s.minutes)) : 2, lines: arr(s.lines).map(str).filter(Boolean) };
+    });
+    return {
+      title: str(d.title) || "System design",
+      goal: str(d.goal), metric: str(d.metric),
+      assumptions: arr(d.assumptions).map(str).filter(Boolean),
+      estimates: arr(d.estimates).filter(Boolean).map(function (e) { return { label: str(e.label), value: str(e.value), math: str(e.math) }; }),
+      components: comps,
+      keyComponent: seen[d.keyComponent] ? str(d.keyComponent) : comps[0].id,
+      flows: flows,
+      dataModel: arr(d.dataModel).filter(Boolean).map(function (m) { return { entity: str(m.entity), fields: str(m.fields), notes: str(m.notes) }; }),
+      apis: arr(d.apis).filter(Boolean).map(function (a) { return { method: str(a.method).toUpperCase(), path: str(a.path), purpose: str(a.purpose) }; }),
+      tradeoffs: arr(d.tradeoffs).filter(Boolean).map(function (t) { return { decision: str(t.decision), chose: str(t.chose), over: str(t.over), because: str(t.because), cost: str(t.cost) }; }),
+      failures: arr(d.failures).filter(Boolean).map(function (f) { return { risk: str(f.risk), mitigation: str(f.mitigation) }; }),
+      mvp: arr(d.mvp).map(str).filter(Boolean), later: arr(d.later).map(str).filter(Boolean),
+      script: script
+    };
+  }
+
+  // ---------- Design rendering ----------
+  var selected = null;
+
+  function renderDesign() {
+    var d = state.design;
+    if (!d) { show("problem"); return; }
+    $("dEyebrow").textContent = state.isExample ? "Example run" : "Your design";
+    $("dTitle").textContent = d.title;
+    $("exampleNote").hidden = !state.isExample;
+    $("dGoal").textContent = d.goal;
+    $("dMetric").textContent = d.metric;
+    renderParams($("dParams"), false);
+    var ul = $("dAssume"); clear(ul);
+    d.assumptions.forEach(function (a) { ul.appendChild(el("li", null, "Assumption: " + a)); });
+
+    selected = d.keyComponent;
+    drawDiagram();
+    renderCards();
+    renderDetail();
+
+    fillRows("tEst", d.estimates, function (e) { return [[e.label], [e.value, "num"], [e.math, "mono"]]; });
+    fillRows("tApi", d.apis, function (a) { return [[(a.method ? a.method + " " : "") + a.path, "mono"], [a.purpose]]; });
+    fillRows("tData", d.dataModel, function (m) { return [[m.entity], [m.fields, "mono"], [m.notes]]; });
+    fillRows("tTrade", d.tradeoffs, function (t) { return [[t.decision], [t.chose], [t.over], [t.because], [t.cost]]; });
+    fillRows("tFail", d.failures, function (f) { return [[f.risk], [f.mitigation]]; });
+    fillList("mvp", d.mvp); fillList("later", d.later);
+    renderScript();
+  }
+  function fillRows(id, rows, fn) {
+    var tb = $(id); clear(tb);
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      fn(r).forEach(function (c) { tr.appendChild(el("td", c[1] || null, c[0])); });
+      tb.appendChild(tr);
+    });
+    tb.closest(".panel").hidden = !rows.length;
+  }
+  function fillList(id, items) { var ul = $(id); clear(ul); items.forEach(function (t) { ul.appendChild(el("li", null, t)); }); }
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function s(tag, attrs, text) {
+    var n = document.createElementNS(SVGNS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function drawDiagram() {
+    var d = state.design;
+    var laneOrder = ["clients", "ingest", "processing", "storage", "consumers"];
+    var laneNames = { clients: "Clients and devices", ingest: "Ingest and APIs", processing: "Processing", storage: "Storage", consumers: "Consumers and outputs" };
+    var lanes = laneOrder.filter(function (l) { return d.components.some(function (c) { return c.lane === l; }); });
+    var colW = 232, nodeW = 150, x0 = 20, y0 = 52, gap = 36;
+    var pos = {}, maxY = 0;
+    lanes.forEach(function (l, i) {
+      var y = y0;
+      d.components.filter(function (c) { return c.lane === l; }).forEach(function (c) {
+        var nl = wrapText(c.name, 17), tl = wrapText(c.tech, 19).slice(0, 2);
+        var h = 20 + nl.length * 17 + tl.length * 14 + 8;
+        pos[c.id] = { x: x0 + i * colW, y: y, w: nodeW, h: h, nl: nl, tl: tl, col: i };
+        y += h + gap;
+      });
+      maxY = Math.max(maxY, y - gap);
+    });
+    var backs = d.flows.filter(function (f) { return pos[f.to].col < pos[f.from].col; }).length;
+    var width = x0 * 2 + (lanes.length - 1) * colW + nodeW;
+    var height = maxY + 28 + backs * 12 + 12;
+
+    var svg = s("svg", { "class": "dia", width: width, height: height, viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": "Architecture diagram: " + d.title });
+    var defs = s("defs");
+    [["dd-arrow", "arrow"], ["dd-arrow-hi", "arrowHi"]].forEach(function (m) {
+      var mk = s("marker", { id: m[0], viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" });
+      mk.appendChild(s("path", { d: "M0 0L10 5L0 10z", "class": m[1] }));
+      defs.appendChild(mk);
+    });
+    svg.appendChild(defs);
+
+    lanes.forEach(function (l, i) {
+      var lx = x0 + i * colW - 8;
+      svg.appendChild(s("rect", { "class": "laneBg", x: lx, y: 12, width: nodeW + 16, height: height - 20, rx: 8 }));
+      svg.appendChild(s("text", { "class": "laneT", x: lx + 10, y: 34 }, laneNames[l]));
+    });
+
+    // ports
+    var outs = {}, ins = {};
+    d.flows.forEach(function (f, i) { (outs[f.from] = outs[f.from] || []).push(i); (ins[f.to] = ins[f.to] || []).push(i); });
+    function frac(list, i) { var k = list.indexOf(i); return (k + 1) / (list.length + 1); }
+
+    var edgeLayer = s("g"), labelLayer = s("g"), nodeLayer = s("g");
+    var backIdx = 0;
+    d.flows.forEach(function (f, i) {
+      var a = pos[f.from], b = pos[f.to], path, lx, ly, anchor = "middle";
+      var hi = selected && (f.from === selected || f.to === selected);
+      if (b.col > a.col) {
+        var sx = a.x + a.w, sy = a.y + a.h * frac(outs[f.from], i), ex = b.x, ey = b.y + b.h * frac(ins[f.to], i);
+        var mx = (sx + ex) / 2;
+        path = "M" + sx + " " + sy + " C" + mx + " " + sy + " " + mx + " " + ey + " " + (ex - 2) + " " + ey;
+        lx = mx; ly = (sy + ey) / 2 - 6;
+      } else if (b.col === a.col) {
+        var down = b.y > a.y, cx = a.x + a.w * (down ? 0.42 : 0.62);
+        var y1 = down ? a.y + a.h : a.y, y2 = down ? b.y : b.y + b.h;
+        path = "M" + cx + " " + y1 + " L" + cx + " " + (down ? y2 - 2 : y2 + 2);
+        lx = cx + 8; ly = (y1 + y2) / 2 + 4; anchor = "start";
+      } else {
+        var loopY = maxY + 22 + backIdx * 12; backIdx++;
+        var gS = a.x - 12, gT = b.x + b.w + 12;
+        var py = a.y + a.h * frac(outs[f.from], i), qy = b.y + b.h * frac(ins[f.to], i);
+        path = "M" + a.x + " " + py + " H" + gS + " V" + loopY + " H" + gT + " V" + qy + " H" + (b.x + b.w + 2);
+        lx = (gS + gT) / 2; ly = loopY - 5;
+      }
+      edgeLayer.appendChild(s("path", { "class": "edge" + (hi ? " hi" : ""), d: path, "marker-end": "url(#" + (hi ? "dd-arrow-hi" : "dd-arrow") + ")" }));
+      if (f.label) {
+        var lines = wrapText(f.label, 13).slice(0, 2);
+        var w = Math.max.apply(null, lines.map(function (t) { return t.length; })) * 5.9 + 8;
+        var top0 = ly - 11 - (lines.length - 1) * 7;
+        var bx = anchor === "middle" ? lx - w / 2 : lx - 3;
+        labelLayer.appendChild(s("rect", { "class": "elblBg", x: bx, y: top0, width: w, height: 15 + (lines.length - 1) * 14, rx: 3 }));
+        lines.forEach(function (t, k) {
+          labelLayer.appendChild(s("text", { "class": "elbl" + (hi ? " hi" : ""), x: lx, y: top0 + 11 + k * 14, "text-anchor": anchor }, t));
+        });
+      }
+    });
+
+    d.components.forEach(function (c) {
+      var p = pos[c.id];
+      var g = s("g", { "class": "node" + (c.id === d.keyComponent ? " key" : "") + (c.id === selected ? " sel" : ""), tabindex: "0", role: "button", "aria-label": c.name });
+      g.appendChild(s("rect", { x: p.x, y: p.y, width: p.w, height: p.h, rx: 8 }));
+      var ty = p.y + 22;
+      p.nl.forEach(function (line) { g.appendChild(s("text", { "class": "nm", x: p.x + 12, y: ty }, line)); ty += 17; });
+      ty += 1;
+      p.tl.forEach(function (line) { g.appendChild(s("text", { "class": "tc", x: p.x + 12, y: ty }, line)); ty += 14; });
+      g.addEventListener("click", function () { select(c.id); });
+      g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(c.id); } });
+      nodeLayer.appendChild(g);
+    });
+    svg.appendChild(edgeLayer); svg.appendChild(labelLayer); svg.appendChild(nodeLayer);
+    var sc = $("diaScroll"); clear(sc); sc.appendChild(svg);
+  }
+
+  function select(id) {
+    selected = id;
+    drawDiagram();
+    renderDetail();
+    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (c) { c.setAttribute("aria-pressed", c.dataset.id === id ? "true" : "false"); c.style.borderColor = c.dataset.id === id ? "var(--accent)" : ""; });
+  }
+
+  function renderDetail() {
+    var d = state.design, box = $("detail"); clear(box);
+    var c = d.components.filter(function (x) { return x.id === selected; })[0];
+    if (!c) { box.appendChild(el("span", "hint", "Select a component.")); return; }
+    box.appendChild(el("span", "k", c.lane + (c.id === d.keyComponent ? " \u00b7 core of the design" : "")));
+    box.appendChild(el("h3", null, c.name));
+    box.appendChild(el("p", null, c.what));
+    if (c.tech) box.appendChild(el("p", "mono", c.tech));
+    if (c.specs.length) {
+      box.appendChild(el("span", "k", "Specifics"));
+      var ul = el("ul"); c.specs.forEach(function (sp) { ul.appendChild(el("li", null, sp)); }); box.appendChild(ul);
+    }
+    var name = {}; d.components.forEach(function (x) { name[x.id] = x.name; });
+    var conns = d.flows.filter(function (f) { return f.from === c.id || f.to === c.id; });
+    if (conns.length) {
+      box.appendChild(el("span", "k", "Connections"));
+      var ul2 = el("ul");
+      conns.forEach(function (f) { ul2.appendChild(el("li", null, f.from === c.id ? "To " + name[f.to] + ": " + f.label : "From " + name[f.from] + ": " + f.label)); });
+      box.appendChild(ul2);
+    }
+  }
+
+  function renderCards() {
+    var d = state.design, wrap = $("cards"); clear(wrap);
+    d.components.forEach(function (c) {
+      var b = el("button", "card" + (c.id === d.keyComponent ? " key" : "")); b.type = "button"; b.dataset.id = c.id;
+      b.appendChild(el("span", "lane", c.lane + (c.id === d.keyComponent ? " \u00b7 core" : "")));
+      b.appendChild(el("h3", null, c.name));
+      if (c.tech) b.appendChild(el("span", "mono", c.tech));
+      var ul = el("ul"); c.specs.forEach(function (sp) { ul.appendChild(el("li", null, sp)); }); b.appendChild(ul);
+      b.addEventListener("click", function () { select(c.id); $("diaScroll").scrollIntoView({ behavior: "smooth", block: "center" }); });
+      wrap.appendChild(b);
+    });
+  }
+
+  // ---------- Script + rehearsal ----------
+  var lineEls = [], cur = -1, startAt = 0, tick = null;
+
+  function renderScript() {
+    var d = state.design, box = $("script"); clear(box); lineEls = [];
+    var total = 0;
+    d.script.forEach(function (sec, si) {
+      total += sec.minutes;
+      var wrap = el("div", "sec");
+      var h = el("div", "sec-h");
+      h.appendChild(el("h3", null, (si + 1) + ". " + sec.section));
+      h.appendChild(el("span", "mins", "~" + sec.minutes + " min"));
+      wrap.appendChild(h);
+      sec.lines.forEach(function (line) {
+        var p = el("p", "line", line); p.dataset.sec = String(si);
+        lineEls.push(p); wrap.appendChild(p);
+      });
+      box.appendChild(wrap);
+    });
+    $("totalMins").textContent = String(total);
+    endRehearse();
+  }
+
+  function setLine(i) {
+    cur = Math.max(0, Math.min(lineEls.length - 1, i));
+    lineEls.forEach(function (p, k) { p.classList.toggle("cur", k === cur); p.classList.toggle("done", k < cur); });
+    var sec = state.design.script[Number(lineEls[cur].dataset.sec)];
+    $("rpos").textContent = "Line " + (cur + 1) + " of " + lineEls.length + " \u00b7 " + sec.section + " (~" + sec.minutes + " min)";
+    $("prevLine").disabled = cur === 0;
+    $("nextLine").textContent = cur === lineEls.length - 1 ? "Done" : "Next line";
+    lineEls[cur].scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function startRehearse() {
+    if (!lineEls.length) return;
+    $("script").classList.add("rehearse");
+    $("rbar").hidden = false;
+    startAt = Date.now();
+    clearInterval(tick);
+    tick = setInterval(function () {
+      var s2 = Math.floor((Date.now() - startAt) / 1000);
+      $("timer").textContent = String(Math.floor(s2 / 60)).padStart(2, "0") + ":" + String(s2 % 60).padStart(2, "0");
+    }, 500);
+    $("timer").textContent = "00:00";
+    setLine(0);
+  }
+  function endRehearse() {
+    $("script").classList.remove("rehearse");
+    $("rbar").hidden = true;
+    clearInterval(tick); tick = null; cur = -1;
+    lineEls.forEach(function (p) { p.classList.remove("cur", "done"); });
+  }
+  $("rehBtn").addEventListener("click", startRehearse);
+  $("endReh").addEventListener("click", endRehearse);
+  $("prevLine").addEventListener("click", function () { setLine(cur - 1); });
+  $("nextLine").addEventListener("click", function () { if (cur === lineEls.length - 1) endRehearse(); else setLine(cur + 1); });
+  document.addEventListener("keydown", function (e) {
+    if (cur < 0 || $("rbar").hidden) return;
+    var t = e.target && e.target.tagName;
+    if (t === "TEXTAREA" || t === "INPUT" || t === "SELECT") return;
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); $("nextLine").click(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); setLine(cur - 1); }
+    if (e.key === "Escape") endRehearse();
+  });
+
+  $("copyBtn").addEventListener("click", function () {
+    var d = state.design;
+    var text = d.title + "\n\n" + d.script.map(function (s3, i) { return (i + 1) + ". " + s3.section + " (~" + s3.minutes + " min)\n" + s3.lines.map(function (l) { return "- " + l; }).join("\n"); }).join("\n\n");
+    var done = function () { $("copyMsg").textContent = "Script copied."; };
+    try {
+      navigator.clipboard.writeText(text).then(done, function () { selectScript(); });
+    } catch (e) { selectScript(); }
+  });
+  function selectScript() {
+    var r = document.createRange(); r.selectNodeContents($("script"));
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    $("copyMsg").textContent = "Copy isn't allowed here; the script is selected so you can copy it yourself.";
+  }
+
+  // ---------- Navigation ----------
+  $("st-problem").addEventListener("click", function () { endRehearse(); show("problem"); });
+  $("st-clarify").addEventListener("click", function () {
+    if (!state.questions.length) return;
+    var unanswered = state.answers.findIndex(function (a) { return !str(a).trim(); });
+    if (unanswered >= 0) { state.idx = unanswered; show("clarify"); } else show("review");
+  });
+  $("st-design").addEventListener("click", function () { show("design"); });
+  $("st-script").addEventListener("click", function () { if (view !== "design") show("design"); $("scriptPanel").scrollIntoView({ behavior: "smooth" }); });
+  $("newBtn").addEventListener("click", function () { endRehearse(); $("problem").value = ""; show("problem"); });
+
+  // ---------- Boot ----------
+  function exampleState() {
+    var e = JSON.parse(JSON.stringify(EXAMPLE));
+    return { problem: e.problem, restated: e.restated, questions: e.questions, answers: e.answers, idx: e.questions.length, design: e.design, isExample: true };
+  }
+  var saved = load();
+  state = saved || exampleState();
+  if (state.design) show("design");
+  else if (state.questions && state.questions.length) {
+    var u = state.answers.findIndex(function (a) { return !str(a).trim(); });
+    if (u >= 0) { state.idx = u; show("clarify"); } else show("review");
+  } else show("problem");
+
+  if (inClaudeViewer) {
+    window.claude.use("sample").then(function (fn) {
+      sample = fn || null;
+      if (view === "problem") $("noClaude").hidden = haveClaude();
+      if (view === "review") renderReview();
+    }).catch(function () { sample = null; });
+  }
+})();
+</script>
+
+</body>
+</html>
